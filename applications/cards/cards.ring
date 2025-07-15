@@ -3,7 +3,8 @@
 ** Author       : Mahmoud Fayed <msfclipper@yahoo.com>
 */
 
-load "guilib.ring"
+load "stdlibcore.ring"
+load "lightguilib.ring"
 
 # Global variables and constants used by the main menu 
 
@@ -22,6 +23,12 @@ load "guilib.ring"
 			 QPushButton:hover{font-size: 28px ;color:navy;background-color:lightblue;} 
 			 QPushButton:pressed{font-size: 28px ;color:#aaa;background-color:#33116a; }"
 
+	new QDesktopWidget() {
+		C_WIDTH  = width()
+		C_HEIGHT = height()
+		C_BUTTONHEIGHT = floor( C_HEIGHT * 0.13 )
+	}
+
 func main
 	oApp = new qApp {
 		winMenu = new qWidget() {
@@ -30,24 +37,24 @@ func main
 			oCardsLabel = new qLabel(winMenu) {
 				setText("The Cards Game")
 				setalignment(Qt_AlignHCenter | Qt_AlignVCenter)
-				setFixedheight(300)
+				setFixedheight(C_BUTTONHEIGHT)
 				setstylesheet(C_LABEL_STYLE)
 			}
 			oBtnOnePlayer = new qPushbutton(winMenu) {
 				setText("One Player")
-				setFixedheight(300)
+				setFixedheight(C_BUTTONHEIGHT)
 				setstylesheet(C_BUTTON_STYLE)
 				setclickevent("OnePlayer()")
 			}
 			oBtnTwoPlayers = new qPushbutton(winMenu) {
 				setText("Two Players")
-				setFixedheight(300)
+				setFixedheight(C_BUTTONHEIGHT)
 				setstylesheet(C_BUTTON_STYLE)
 				setclickevent("TwoPlayers()")
 			}
 			oBtnExit = new qPushbutton(winMenu) {
 				setText("Exit")
-				setFixedheight(300)
+				setFixedheight(C_BUTTONHEIGHT)
 				setstylesheet(C_BUTTON_STYLE)
 				setClickevent("CloseGame()")
 			}
@@ -104,12 +111,16 @@ func LoadCardsGame
 class Game
 
 	# Setting properties based on platform
-	        if ismobile()
+		C_BTNIMAGEWIDTH  = floor( C_WIDTH * 0.057 )
+		C_BTNIMAGEHEIGHT = floor( C_HEIGHT * 0.16 )
+
+		C_PLAYERTITLEHEIGHT = floor( C_HEIGHT * 0.16 )
+		C_CLOSEBTNHEIGHT    = floor( C_HEIGHT * 0.13 )
+
+	        if isMobile() or isWebAssembly()
 			nCardsCount = 5
-			nScale = 3
 	        else
 			nCardsCount = 10
-			nScale = 1
 	        ok
 	
 	# From the Game State
@@ -130,8 +141,8 @@ class Game
 	# More attributes
 	        lnewgame 	= false
 	        nDelayEat 	= 0.5
-	        nDelayNewGame 	= 1
-		nDelayComputer  = 0.2
+	        nDelayNewGame 	= 0.5
+		nDelayComputer  = 0.3
 	
 	func loadGame poPic,poPic2,pPlayer1Eatpic,pPlayer2Eatpic,paGameCards,paGameValues,pnPlayer1Score,pnPlayer2Score
 		oPic		= poPic 
@@ -157,7 +168,7 @@ class Game
                         setalignment(Qt_AlignHCenter | Qt_AlignVCenter)
                         setstylesheet("color: White; background-color: Purple;
                                          font-size:20pt")
-                        setfixedheight(200)
+                        setfixedheight(this.C_PLAYERTITLEHEIGHT)
                 }
 
                 closebtn = new qpushbutton(win1)  {
@@ -171,8 +182,8 @@ class Game
                                          padding: 6px;
                                         ")
                         setclickevent("oGame.win1.close()")
-                        if ismobile()
-                            setfixedheight(100)
+                        if isMobile() or isWebAssembly()
+                            setfixedheight(this.C_CLOSEBTNHEIGHT)
                         ok
                 }
 
@@ -185,8 +196,8 @@ class Game
 
                 for x = 1 to nCardsCount
                         aBtns + new qpushbutton(win1)
-                        aBtns[x].setfixedwidth(79*nScale)
-                        aBtns[x].setfixedheight(124*nScale)
+                        aBtns[x].setfixedwidth(this.C_BTNIMAGEWIDTH)
+                        aBtns[x].setfixedheight(this.C_BTNIMAGEHEIGHT)
                         setButtonImage(aBtns[x],oPic2)
                         layout2.addwidget(aBtns[x])
                         aBtns[x].setclickevent("oGame.Player1click("+x+")")
@@ -201,7 +212,7 @@ class Game
                         setalignment(Qt_AlignHCenter | Qt_AlignVCenter)
                         setstylesheet("color: white; background-color: red;
                                          font-size:20pt")
-                        setfixedheight(200)
+                        setfixedheight(this.C_PLAYERTITLEHEIGHT)
                 }
 
                 layout3 = new qhboxlayout()
@@ -209,8 +220,8 @@ class Game
                 aBtns2 = []
                 for x = 1 to nCardsCount
                         aBtns2 + new qpushbutton(win1)
-                        aBtns2[x].setfixedwidth(79*nScale)
-                        aBtns2[x].setfixedheight(124*nScale)
+                        aBtns2[x].setfixedwidth(this.C_BTNIMAGEWIDTH)
+                        aBtns2[x].setfixedheight(this.C_BTNIMAGEHEIGHT)
                         setButtonImage(aBtns2[x],oPic2)
                         layout3.addwidget(aBtns2[x])
                         aBtns2[x].setclickevent("oGame.Player2click("+x+")")
@@ -232,7 +243,10 @@ class Game
 		ok
 
 		win1.showfullscreen()
-		win1.exec()
+
+		if ! isWebAssembly()
+			win1.exec()
+		ok
 
 	func setButtonImage oBtn,oPixmap
 	        oBtn {
@@ -241,7 +255,7 @@ class Game
 	        }
 	
 	func setButtonStyle oBtn
-		if ismobile()
+		if isMobile() or isWebAssembly()
 			oBtn.setStyleSheet("
 			border-style: outset;
 			border-width: 2px;
@@ -275,14 +289,14 @@ class Game
                         Player2Eat(x,aStatusValues2[x])
                         checknewgame()
 			if nGameMode = C_GAMEMODE_ONEPLAYER
-				delay(nDelayComputer)
+				sleep(nDelayComputer)
 				ComputerAction()
 			ok
                 ok
  
         func Player1Eat nPos,nValue
                  oApp.processEvents()
-                 delay(nDelayEat)
+                 sleep(nDelayEat)
                  lEat = false
                  for x = 1 to nCardsCount
                          if aStatus2[x] = 1 and (aStatusValues2[x] = nValue or nValue=5)
@@ -308,7 +322,7 @@ class Game
 
         func Player2Eat nPos,nValue
                  oApp.processEvents()
-                 delay(nDelayEat)
+                 sleep(nDelayEat)
                  lEat = false
                  for x = 1 to  nCardsCount
                          if aStatus[x] = 1 and (aStatusValues[x] = nValue or nValue = 5)
@@ -346,7 +360,7 @@ class Game
 				oOnePlayerTimer.stop()
 			ok
 			oApp.processEvents()
-			delay(nDelayNewGame)
+			sleep(nDelayNewGame)
 			win1.close()
                 ok
 
@@ -362,11 +376,6 @@ class Game
                         ok
                 next
                 return true
-
-        func delay x
-		nTime = x * 1000
-		oTest = new qTest
-		oTest.qsleep(nTime)
 
 	func ComputerAction
 		oOnePlayerTimer.stop()
